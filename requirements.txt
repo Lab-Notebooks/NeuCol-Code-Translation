@@ -1,0 +1,2 @@
+huggingface_hub[cli]
+git+ssh://git@github.com/Lab-Notebooks/Jobrunner.git@2024.01

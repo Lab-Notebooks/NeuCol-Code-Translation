@@ -1,0 +1,3 @@
+job:
+  setup:
+    - downloadModels.sh

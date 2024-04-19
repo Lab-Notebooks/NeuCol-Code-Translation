@@ -1,0 +1,17 @@
+*.out
+Backtrace*
+core*
+__pycache__
+*.ipynb_checkpoints
+config.sh
+software/codellama/Llama
+software/neucol/mcfminterface
+models/codellama/CodeLlama-7b
+models/codellama/CodeLlama-7b-Instruct
+job.target
+job.setup
+job.submit
+job.output
+boxmem
+*jobnode.archive*
+*.tar.gz

@@ -1,0 +1,8 @@
+job:
+  submit:
+    - translate.sh
+  archive:
+    - "job.output*"
+    - "*.yaml"
+  clean:
+    - "*.yaml"
