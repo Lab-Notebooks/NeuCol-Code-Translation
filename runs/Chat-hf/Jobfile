@@ -1,9 +1,9 @@
 job:
+  target: chat.py
   submit:
-    - translate.sh
+    - chat.sh
   archive:
     - "job.output*"
     - "*.json"
   clean:
     - "*.json"
-  target: translate.py

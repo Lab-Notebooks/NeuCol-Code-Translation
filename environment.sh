@@ -13,7 +13,7 @@ source $SiteHome/environment.sh
 
 export CODELLAMA_HOME="$PROJECT_HOME/software/codellama/Llama"
 export MODEL_HOME="$PROJECT_HOME/models"
-export FLASHX_HOME="$PROJECT_HOME/software/flashx/Flash-X"
+export MCFM_HOME="$PROJECT_HOME/software/neucol/mcfminterface"
 
 # Output information to stdout
 echo "---------------------------------------------------------------------------------------"
