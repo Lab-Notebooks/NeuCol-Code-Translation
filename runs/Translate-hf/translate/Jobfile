@@ -1,0 +1,9 @@
+job:
+  submit:
+    - translate.sh
+  archive:
+    - "job.output*"
+    - "*.json"
+  clean:
+    - "*.json"
+  target: translate.py

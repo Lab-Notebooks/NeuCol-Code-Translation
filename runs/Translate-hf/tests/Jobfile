@@ -1,0 +1,6 @@
+job:
+  submit:
+    - tests.sh
+  archive:
+    - "job.output*"
+  target: tests.py
