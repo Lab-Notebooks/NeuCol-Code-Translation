@@ -15,10 +15,11 @@ colors = SimpleNamespace(
     end="\033[0m",
 )
 
+
 def get_user_input(input_text):
-    user_input = input(f"\n{colors.darkcyan}{input_text}: ")
-    print(f"{colors.end}")
+    user_input = input(f"\n{colors.darkcyan}{input_text}: {colors.end}")
     return user_input
 
+
 def display_output(output_text):
-    print(f"\n{colors.red}{output_text}{colors.end}")
+    print(f"{colors.red}{output_text}{colors.end}")

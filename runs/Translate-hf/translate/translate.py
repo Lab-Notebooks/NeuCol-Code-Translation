@@ -33,13 +33,22 @@ def main(
     elif int(llm_choice) == 3:
         ckpt_dir = os.getenv("MODEL_HOME") + os.sep + "google/gemma-7b-it"
     else:
-        raise ValueError(f"Option {llm_choice} not defined")
+        api.display_output(f"Option {llm_choice} not defined")
+        raise NotImplementedError
 
-    dest = api.get_user_input('Enter destination folder name (prefix it with "src_")')
+    if not os.path.exists(ckpt_dir):
+        api.display_output(
+            f'Checkpoint directory does not exist for option "{llm_choice}"'
+        )
+        raise NotImplementedError
+    else:
+        api.display_output(f'Checkpoint directory exists for option "{llm_choice}"')
+
+    dest = api.get_user_input("Enter destination folder name")
     mapping = neucol.create_src_mapping(dest)
 
     source_dirs = api.get_user_input(
-        "MCFM interface src directories separated by commas, use (*) for all"
+        "Enter source code directories separated by commas, use (*) for all"
     )
     source_files = []
     target_files = []
@@ -56,12 +65,25 @@ def main(
                     target_files.append(tfile)
 
     if len(source_files) != len(target_files):
-        raise ValueError(
+        api.display_output(
             "source_files and target_files for conversion do not match in length"
         )
+        raise ValueError
 
-    instructions = []
-    prompt = api.get_user_input("LLM-Prompt")
+    api.display_output("Starting code conversion process")
+
+    main_prompt = []
+    main_prompt.append(
+        "Convert FORTRAN source code to C++. Do not infer context outside the block of code you receive."
+    )
+    main_prompt.append(
+        "The code blocks you will receive are part of a bigger codebase so do not add "
+        + "additional function declarations, or a main function definition. Just do the conversion process line-by-line."
+    )
+    # main_prompt.append(
+    #    "Note that the output will be written directly to the file, so do not output code in "
+    #    + "markdown code block. Include any text as C++ comments."
+    # )
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(ckpt_dir)
 
@@ -74,37 +96,52 @@ def main(
 
     for sfile, tfile in zip(source_files, target_files):
 
-        with open(sfile, "r") as source:
-            source_code = source.readlines()
+        if not os.path.isfile(tfile):
 
-        with open(tfile, "w") as destination:
-            destination.write(f"# LLM-Prompt: {prompt}\n\n")
-            chunk_size = 100
+            with open(sfile, "r") as source:
+                source_code = source.readlines()
 
-            for lines in [
-                source_code[i : i + chunk_size]
-                for i in range(0, len(source_code), chunk_size)
-            ]:
-                instructions.append(
-                    dict(role="user", content=prompt + ":\n" + "".join(lines))
-                )
+            file_prompt = neucol.infer_src_mapping(sfile, mapping)
+            file_prompt.append("The following code is part of a single file")
 
-                results = pipeline(
-                    instructions,
-                    max_new_tokens=max_new_tokens,
-                    max_length=max_length,
-                    batch_size=batch_size,
-                    # temperature=temperature,
-                    # top_p=top_p,
-                    # do_sample=True,
-                    eos_token_id=tokenizer.eos_token_id,
-                    pad_token_id=50256,
-                )
+            llm_prompt = main_prompt + file_prompt
 
-                for result in results:
-                    destination.write(result["generated_text"][-1]["content"])
+            with open(tfile, "w") as destination:
+                destination.write("/*PROMPT START")
+                for prompt_line in llm_prompt:
+                    destination.write(f"\n{prompt_line}")
+                destination.write(f"\nPROMPT END*/\n\n")
+                chunk_size = 100
 
-                instructions.pop()
+                for lines in [
+                    source_code[i : i + chunk_size]
+                    for i in range(0, len(source_code), chunk_size)
+                ]:
+
+                    instructions = [
+                        dict(
+                            role="user",
+                            content="\n".join(llm_prompt) + ":\n" + "".join(lines),
+                        )
+                    ]
+
+                    results = pipeline(
+                        instructions,
+                        max_new_tokens=max_new_tokens,
+                        max_length=max_length,
+                        batch_size=batch_size,
+                        # temperature=temperature,
+                        # top_p=top_p,
+                        # do_sample=True,
+                        eos_token_id=tokenizer.eos_token_id,
+                        pad_token_id=50256,
+                    )
+
+                    for result in results:
+                        destination.write(result["generated_text"][-1]["content"])
+
+        else:
+            continue
 
 
 if __name__ == "__main__":
