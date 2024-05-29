@@ -14,9 +14,19 @@ def infer_src_mapping(sfile, mapping):
 
     if sfile == mapping["src"]["dir"] + os.sep + "Mods/AllModules.h":
         prompt.append(
-            "Treat the subsequent source code as a header file when you convert FORTRAN syntax to C++."
+            "Convert this file to a C++ header file. Note that inputs are chunks which belong to same file, do not try "
+            + "to infer around the input or provide any context. Simply convert the source code from FORTRAN to C++."
         )
     else:
+        prompt.append(
+            "Convert this file to a C++ source code file. Note that inputs are chunks which belong to same file, do not try "
+            + "to infer around the input or provide any context. Simply convert the source code from FORTRAN to C++."
+        )
+        prompt.append(
+            "The code blocks you will receive are part of a bigger codebase so do not add "
+            + "additional function declarations, or a main function definition. Just do the conversion process line-by-line."
+        )
+
         prompt.append(
             'Replace "use" statements in FORTRAN with "#include "Mods/AllModules.h" in the C++ version.'
         )
@@ -24,6 +34,8 @@ def infer_src_mapping(sfile, mapping):
             'Put the "#include" statement at the top of the file and assume that any '
             + "variables that are not declared in the file are available in the header file."
         )
+
+    prompt.append('Treat "real(dp)" as "real(*8)", and "complex(dp)" as "complex(*8)".')
 
     return prompt
 

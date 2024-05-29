@@ -74,12 +74,16 @@ def main(
 
     main_prompt = []
     main_prompt.append(
-        "Convert FORTRAN source code to C++. Do not infer context outside the block of code you receive."
+        "You are a code conversion tool for a scientific computing application. "
+        + "The application is organized as different source files in a directory structure."
     )
-    main_prompt.append(
-        "The code blocks you will receive are part of a bigger codebase so do not add "
-        + "additional function declarations, or a main function definition. Just do the conversion process line-by-line."
-    )
+    # main_prompt.append(
+    #    "Convert FORTRAN source code to C++. Do not infer context outside the block of code you receive."
+    # )
+    # main_prompt.append(
+    #    "The code blocks you will receive are part of a bigger codebase so do not add "
+    #    + "additional function declarations, or a main function definition. Just do the conversion process line-by-line."
+    # )
     # main_prompt.append(
     #    "Note that the output will be written directly to the file, so do not output code in "
     #    + "markdown code block. Include any text as C++ comments."
@@ -109,7 +113,7 @@ def main(
             with open(tfile, "w") as destination:
                 destination.write("/*PROMPT START")
                 for prompt_line in llm_prompt:
-                    destination.write(f"\n{prompt_line}")
+                    destination.write(f"\n//{prompt_line}")
                 destination.write(f"\nPROMPT END*/\n\n")
                 chunk_size = 100
 
