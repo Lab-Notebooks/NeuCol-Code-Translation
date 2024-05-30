@@ -10,6 +10,7 @@ import api, neucol
 
 from typing import Optional
 import fire, transformers, torch
+from alive_progress import alive_bar
 
 
 def main(
@@ -98,54 +99,59 @@ def main(
         device=0,
     )
 
-    for sfile, tfile in zip(source_files, target_files):
+    with alive_bar(len(source_files), bar="blocks") as bar:
 
-        if not os.path.isfile(tfile):
+        for sfile, tfile in zip(source_files, target_files):
 
-            with open(sfile, "r") as source:
-                source_code = source.readlines()
+            bar.text(sfile.replace(mapping["src"]["dir"] + os.sep, ""))
+            bar()
 
-            file_prompt = neucol.infer_src_mapping(sfile, mapping)
-            file_prompt.append("The following code is part of a single file")
+            if not os.path.isfile(tfile):
 
-            llm_prompt = main_prompt + file_prompt
+                with open(sfile, "r") as source:
+                    source_code = source.readlines()
 
-            with open(tfile, "w") as destination:
-                destination.write("/*PROMPT START")
-                for prompt_line in llm_prompt:
-                    destination.write(f"\n//{prompt_line}")
-                destination.write(f"\nPROMPT END*/\n\n")
-                chunk_size = 100
+                file_prompt = neucol.infer_src_mapping(sfile, mapping)
+                file_prompt.append("The following code is part of a single file")
 
-                for lines in [
-                    source_code[i : i + chunk_size]
-                    for i in range(0, len(source_code), chunk_size)
-                ]:
+                llm_prompt = main_prompt + file_prompt
 
-                    instructions = [
-                        dict(
-                            role="user",
-                            content="\n".join(llm_prompt) + ":\n" + "".join(lines),
+                with open(tfile, "w") as destination:
+                    destination.write("/*PROMPT START")
+                    for prompt_line in llm_prompt:
+                        destination.write(f"\n//{prompt_line}")
+                    destination.write(f"\nPROMPT END*/\n\n")
+                    chunk_size = 100
+
+                    for lines in [
+                        source_code[i : i + chunk_size]
+                        for i in range(0, len(source_code), chunk_size)
+                    ]:
+
+                        instructions = [
+                            dict(
+                                role="user",
+                                content="\n".join(llm_prompt) + ":\n" + "".join(lines),
+                            )
+                        ]
+
+                        results = pipeline(
+                            instructions,
+                            max_new_tokens=max_new_tokens,
+                            max_length=max_length,
+                            batch_size=batch_size,
+                            # temperature=temperature,
+                            # top_p=top_p,
+                            # do_sample=True,
+                            eos_token_id=tokenizer.eos_token_id,
+                            pad_token_id=50256,
                         )
-                    ]
 
-                    results = pipeline(
-                        instructions,
-                        max_new_tokens=max_new_tokens,
-                        max_length=max_length,
-                        batch_size=batch_size,
-                        # temperature=temperature,
-                        # top_p=top_p,
-                        # do_sample=True,
-                        eos_token_id=tokenizer.eos_token_id,
-                        pad_token_id=50256,
-                    )
+                        for result in results:
+                            destination.write(result["generated_text"][-1]["content"])
 
-                    for result in results:
-                        destination.write(result["generated_text"][-1]["content"])
-
-        else:
-            continue
+            else:
+                continue
 
 
 if __name__ == "__main__":
