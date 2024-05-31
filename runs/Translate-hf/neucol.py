@@ -68,7 +68,7 @@ def create_src_mapping(dest):
     else:
         api.display_output(f'Creating desitnation directory "{dest}"')
         for item in os.walk(src_dir):
-            sub_dir = item[0].replace(src_dir + os.sep, "")
+            sub_dir = item[0].replace(src_dir, "")
             os.makedirs(dest_dir + os.sep + sub_dir)
 
     src_files = []
@@ -76,7 +76,7 @@ def create_src_mapping(dest):
 
     for item in os.walk(src_dir):
 
-        sub_dir = item[0].replace(src_dir + os.sep, "")
+        sub_dir = item[0].replace(src_dir, "")
 
         for file in item[2]:
             if not file.endswith(
