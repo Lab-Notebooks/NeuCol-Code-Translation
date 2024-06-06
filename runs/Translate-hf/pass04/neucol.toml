@@ -1,0 +1,9 @@
+# source code mapping
+sources = ["/Need/couplz.f"]
+headers = [
+    "/Mods/types_mod.f90",
+    "/Mods/constants_mod.f90",
+    "/Mods/nf_mod.f90",
+    "/Mods/zcouple_mod.f90",
+    "/Mods/ewcharge_mod.f90",
+]
