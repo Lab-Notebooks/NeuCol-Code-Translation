@@ -44,7 +44,7 @@ def main(
         raise NotImplementedError
     else:
         api.display_output(f'Checkpoint directory exists for option "{llm_choice}"')
-   
+
     mapping = neucol.create_src_mapping()
 
     source_files = mapping["src"]["files"]
@@ -78,16 +78,20 @@ def main(
     )
     main_prompt.append(
         ' - Change "use <module-name>" statement to C++ "using namespace <module-name>" and include the corresponding header '
-        + 'file with the same name.For example "use types" should be replaced with "#include "types.hpp"" and '
-        + '"using namespace types". Additionally, Treat "module <module-name> ... end <module-name>" as separate namespace.'
+        + 'file with the same name.For example "use constants_mod" should be replaced with "#include "constants_mod.hpp"" and '
+        + '"using namespace constants_mod". Additionally, Treat "module <module-name> ... end <module-name>" as separate namespace, '
+        + "and include relevant header file directives to conform with C++ style."
     )
     main_prompt.append(
         '- Put the "#include" statements at the top of the file and assume that any '
         + "variables that are not declared in the file are available in the header file."
     )
     main_prompt.append(
-        '- Treat "real(dp)" as "std::double", and "complex(dp)" as "std::complex<double>" to convert to '
-        + "corresponding C++ types. Adjust the syntax for correctness."
+        '- Treat "real(dp)" as "std::double", and "complex(dp)" as "std::complex<double>" and include <complex> header file '
+        + "to convert to corresponding C++ types. Adjust the syntax for correctness."
+    )
+    main_prompt.append(
+        "- Treat Fortran array initailization as std::vector initalization. Include <vector> header file"
     )
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(ckpt_dir)

@@ -1,4 +1,6 @@
 # source code mapping
+source = ["/Need/couplz.f"]
+
 headers = [
     "/Mods/constants_mod.f90",
     "/Mods/nf_mod.f90",
