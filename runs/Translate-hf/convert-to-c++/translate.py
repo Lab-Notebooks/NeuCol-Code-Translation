@@ -1,7 +1,7 @@
 # Prompt engineering for building diffusion stencils for constant and variable coefficient equation
 
 # Import libraries
-import os, sys
+import os, sys, toml
 
 for path in os.getenv("PYMODULE_PATH").split(":"):
     sys.path.insert(0, path)
@@ -14,6 +14,8 @@ from alive_progress import alive_bar
 
 
 def main(
+    file_map: str,
+    template: str,
     max_new_tokens: int = 4096,
     batch_size: int = 8,
     max_length: Optional[int] = None,
@@ -45,7 +47,7 @@ def main(
     else:
         api.display_output(f'Checkpoint directory exists for option "{llm_choice}"')
 
-    mapping = neucol.create_src_mapping()
+    mapping = neucol.create_src_mapping(file_map)
 
     source_files = mapping["src"]["files"]
     target_files = mapping["dest"]["files"]
@@ -55,6 +57,10 @@ def main(
             "source_files and target_files for conversion do not match in length"
         )
         raise ValueError
+
+    api.display_output(f'Loading template from "{template}"')
+
+    instructions = toml.load(template)["instructions"]
 
     api.display_output("Starting code conversion process")
 
@@ -91,9 +97,12 @@ def main(
         + "to convert to corresponding C++ types. Adjust the syntax for correctness."
     )
     main_prompt.append(
-        "- Treat Fortran array initailization as std::vector initalization. Include <vector> header file"
+        "- Treat Fortran array initailization as C++ array initalization."
     )
-
+    main_prompt.append("- Include an extern C interface for FORTRAN.")
+    main_prompt.append(
+        "- Use the chat history as a reference to all of my instructions."
+    )
     tokenizer = transformers.AutoTokenizer.from_pretrained(ckpt_dir)
 
     pipeline = transformers.pipeline(
@@ -126,14 +135,14 @@ def main(
                         destination.write(f"\n// {prompt_line}")
                     destination.write(f"\nPROMPT END*/\n\n")
 
-                    instructions = [
+                    instructions.append(
                         dict(
                             role="user",
                             content="\n".join(llm_prompt)
                             + ":\n"
                             + "".join(source_code),
                         )
-                    ]
+                    )
 
                     results = pipeline(
                         instructions,
@@ -168,6 +177,7 @@ def main(
                         #        destination.write(f'// {line}"\n"')
                         #    else:
                         #        destination.write(f'{line}"\n"')
+                    instructions.pop()
 
             else:
                 continue

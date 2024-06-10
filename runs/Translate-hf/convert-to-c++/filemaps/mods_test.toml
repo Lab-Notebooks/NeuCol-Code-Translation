@@ -1,0 +1,8 @@
+# neucol toml
+sources = []
+headers = [
+    "/Mods/kprocess_mod.f90",
+    "/Mods/zeta_mod.f90",
+    "/Mods/first_mod.f90",
+    "/Mods/limits_mod.f90",
+]

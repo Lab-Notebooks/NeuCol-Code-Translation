@@ -13,7 +13,7 @@ def infer_src_mapping(sfile, mapping):
     return prompt
 
 
-def create_src_mapping():
+def create_src_mapping(file_map):
     """
     Build directory tree from neucol source code.
 
@@ -24,16 +24,16 @@ def create_src_mapping():
     src_dir = os.getenv("MCFM_HOME") + os.sep + "src"
     dest_dir = os.getenv("MCFM_HOME") + os.sep + "src"
 
-    input_files = toml.load("neucol.toml")
+    input_files = toml.load(file_map)
 
     src_files = []
     dest_files = []
-   
-    api.display_output(f'Mapping files from "neucol.toml"')
+
+    api.display_output(f'Mapping files from "{file_map}"')
     api.display_output(
         "Please note that existing files will not be replaced in the destination."
     )
- 
+
     for item in os.walk(src_dir):
 
         sub_dir = item[0].replace(src_dir, "")
