@@ -14,7 +14,7 @@ from alive_progress import alive_bar
 
 
 def main(
-    file_map: str,
+    filemap: str,
     template: str,
     max_new_tokens: int = 4096,
     batch_size: int = 8,
@@ -47,7 +47,7 @@ def main(
     else:
         api.display_output(f'Checkpoint directory exists for option "{llm_choice}"')
 
-    mapping = neucol.create_src_mapping(file_map)
+    mapping = neucol.create_src_mapping(filemap)
 
     source_files = mapping["src"]["files"]
     target_files = mapping["dest"]["files"]
@@ -59,52 +59,11 @@ def main(
         raise ValueError
 
     api.display_output(f'Loading template from "{template}"')
-
     instructions = toml.load(template)["instructions"]
 
     api.display_output("Starting code conversion process")
 
-    main_prompt = []
-    main_prompt.append(
-        "- You are a code conversion tool for a scientific computing application. "
-        + "The application is organized as different source files in a directory structure."
-    )
-    main_prompt.append(
-        "- Convert this file to a C++ source code file. Note that inputs are chunks which belong to same file, do not try "
-        + "to infer around the input or provide any context. Simply convert the source code from FORTRAN to C++."
-    )
-    main_prompt.append(
-        "- I am writing the output directly to a source file so make sure whatever I receive from you is a "
-        + "compilable C++ syntax. This means any comments you make on the code or conversion process should be included "
-        + "as a C++ comment. Any text that is not code should be include as a C++ commment. Do not use a markdown format"
-    )
-    main_prompt.append(
-        "- The code blocks you will receive are part of a bigger codebase so do not add "
-        + "additional function declarations, or a main function definition. Just do the conversion process line-by-line."
-    )
-    main_prompt.append(
-        ' - Change "use <module-name>" statement to C++ "using namespace <module-name>" and include the corresponding header '
-        + 'file with the same name.For example "use constants_mod" should be replaced with "#include "constants_mod.hpp"" and '
-        + '"using namespace constants_mod". Additionally, Treat "module <module-name> ... end <module-name>" as separate namespace, '
-        + "and include relevant header file directives to conform with C++ style."
-    )
-    main_prompt.append(
-        '- Put the "#include" statements at the top of the file and assume that any '
-        + "variables that are not declared in the file are available in the header file."
-    )
-    main_prompt.append(
-        '- Treat "real(dp)" as "std::double", and "complex(dp)" as "std::complex<double>" and include <complex> header file '
-        + "to convert to corresponding C++ types. Adjust the syntax for correctness."
-    )
-    main_prompt.append(
-        "- Treat Fortran array initailization as C++ array initalization."
-    )
-    main_prompt.append("- Include an extern C interface for FORTRAN.")
-    main_prompt.append(
-        "- Use the chat history as a reference to all of my instructions."
-    )
     tokenizer = transformers.AutoTokenizer.from_pretrained(ckpt_dir)
-
     pipeline = transformers.pipeline(
         "text-generation",
         model=ckpt_dir,
@@ -121,28 +80,27 @@ def main(
 
             if not os.path.isfile(tfile):
 
+                source_code = []
                 with open(sfile, "r") as source:
-                    source_code = source.readlines()
-
-                file_prompt = neucol.infer_src_mapping(sfile, mapping)
-                file_prompt.append("The following code is part of a single file")
-
-                llm_prompt = main_prompt + file_prompt
+                    for line in source.readlines():
+                        if len(line.strip()) > 2:
+                            if (
+                                line.strip()[0] != "!"
+                                and line.strip()[:2] != "/*"
+                                and line.strip()[:2] != "//"
+                            ):
+                                source_code.append(line)
+                        else:
+                            source_code.append(line)
 
                 with open(tfile, "w") as destination:
-                    destination.write("/*PROMPT START")
-                    for prompt_line in llm_prompt:
-                        destination.write(f"\n// {prompt_line}")
-                    destination.write(f"\nPROMPT END*/\n\n")
+                    destination.write("/* LLM INSTRUCTIONS START\n")
+                    for line in instructions[0]["content"].split("\n"):
+                        destination.write(f" * {line}\n")
+                    destination.write(f" * LLM INSTRUCTIONS END */\n\n")
 
-                    instructions.append(
-                        dict(
-                            role="user",
-                            content="\n".join(llm_prompt)
-                            + ":\n"
-                            + "".join(source_code),
-                        )
-                    )
+                    saved_prompt = instructions[-1]["content"]
+                    instructions[-1]["content"] += "\n" + "".join(source_code)
 
                     results = pipeline(
                         instructions,
@@ -177,7 +135,7 @@ def main(
                         #        destination.write(f'// {line}"\n"')
                         #    else:
                         #        destination.write(f'{line}"\n"')
-                    instructions.pop()
+                    instructions[-1]["content"] = saved_prompt
 
             else:
                 continue
