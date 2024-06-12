@@ -1,0 +1,5 @@
+# neucol toml
+sources = []
+headers = [
+    "/Mods/b0_mod.hpp",
+]

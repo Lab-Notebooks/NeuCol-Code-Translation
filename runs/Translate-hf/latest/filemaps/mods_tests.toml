@@ -1,0 +1,5 @@
+# neucol toml
+sources = []
+headers = [
+    "/Mods/yukawas_mod.f90",
+]

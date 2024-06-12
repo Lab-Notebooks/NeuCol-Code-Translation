@@ -82,22 +82,44 @@ def main(
 
                 source_code = []
                 with open(sfile, "r") as source:
+
+                    is_comment = False
+                    is_comment_block = False
+
                     for line in source.readlines():
-                        if len(line.strip()) > 2:
-                            if (
-                                line.strip()[0] != "!"
-                                and line.strip()[:2] != "/*"
-                                and line.strip()[:2] != "//"
-                            ):
-                                source_code.append(line)
-                        else:
+                        is_comment = False
+
+                        if is_comment_block:
+                            is_comment = True
+                        elif line.strip().startswith(("!", "//")):
+                            is_comment = True
+                        elif line.strip().startswith("/*"):
+                            is_comment = True
+                            is_comment_block = True
+
+                        if is_comment_block and line.strip().endswith("*/"):
+                            is_comment_block = False
+
+                        if not is_comment:
                             source_code.append(line)
 
                 with open(tfile, "w") as destination:
-                    destination.write("/* LLM INSTRUCTIONS START\n")
+                    if tfile.endswith((".hpp",".cpp")):
+                        comment_start = "/*"
+                        comment_contd = " *"
+                        comment_end = "*/"
+                    elif tfile.endswith(".f90"):
+                        comment_start = "!!"
+                        comment_contd = "!!"
+                        comment_end = ""
+                    else:
+                        print(f"Cannot write to destination file: {tfile}")
+                        raise ValueError
+
+                    destination.write(f"{comment_start} LLM INSTRUCTIONS START\n")
                     for line in instructions[0]["content"].split("\n"):
-                        destination.write(f" * {line}\n")
-                    destination.write(f" * LLM INSTRUCTIONS END */\n\n")
+                        destination.write(f"{comment_contd} {line}\n")
+                    destination.write(f"{comment_contd} LLM INSTRUCTIONS END {comment_end}\n\n")
 
                     saved_prompt = instructions[-1]["content"]
                     instructions[-1]["content"] += "\n" + "".join(source_code)
