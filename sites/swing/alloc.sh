@@ -1,1 +1,1 @@
-srun --gres=gpu:1 --pty bash
+srun --gres=gpu:2 --pty bash

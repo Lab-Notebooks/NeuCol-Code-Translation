@@ -1,0 +1,15 @@
+# neucol toml
+sources = []
+headers = [
+    "/Mods/epinv_mod.f90",
+    "/Mods/nflav_mod.f90",
+    "/Mods/nlooprun_mod.f90",
+    "/Mods/couple_mod.f90",
+    "/Mods/nproc_mod.f90",
+    "/Mods/removebr_mod.f90",
+    "/Mods/zerowidth_mod.f90",
+    "/Mods/flags_mod.f90",
+    "/Mods/nwz_mod.f90",
+    "/Mods/zcouple_cms_mod.f90",
+    "/Mods/hdecaymode_mod.f90",
+]
