@@ -8,7 +8,7 @@ make install
 ./test -b u d~ ve e+ # Directories: W
 ./test -b u d~ ve e+ g # Directories: W1jet
 ./test -b u d~ ve e+ g g # Directories: W2jet, BDK, loop
-./test -b u u~ e- e+ # Directories: Z
+./test -b u u~ e- e+ # Directories: Z (converted)
 ./test -b u u~ e- e+ g # Directories: Z1jet, loop
 ./test -b u u~ e- e+ g g # Directories: Z2jet, W2jet, BDK, loop
 ./test -b -Pmodel=heft g g h # Directories: ggH

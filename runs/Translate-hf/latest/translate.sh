@@ -6,4 +6,4 @@
 export LOCAL_PYMODULE_PATH="$PWD:$LOCAL_PYMODULE_PATH"
 
 # Execute torchrun command and deploy job.target
-torchrun --nproc_per_node 1 $JobWorkDir/job.target --filemap filemaps/funcs.toml --template templates/funcs.toml
+torchrun --nproc_per_node 1 $JobWorkDir/job.target --filemap filemaps/funcs.toml --template templates/funcs_farray.toml
