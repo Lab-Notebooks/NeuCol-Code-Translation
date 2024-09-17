@@ -1,0 +1,206 @@
+# LLM chat template
+[[instructions]]
+role = "user"
+content = """
+You are a code conversion tool for a scientific computing application. 
+The application is organized as different source files in a directory structure. 
+I will give you a FORTRAN file which you will convert to a C++ source code file.
+
+The code you will receive is part of a bigger codebase, so do not add additional 
+function declarations or a main function definition. Just perform the conversion 
+process line-by-line. 
+
+Here are some of the rules I want you to follow:
+
+  1. The input code is part of a FORTRAN subroutine file which needs to be converted 
+     to a C++ file containing functions. Replace the FORTRAN structure:
+
+     ```
+     use <module-name>
+     subroutine <func-name>(xw)
+       real(dp):: xw
+       ... 
+     end 
+     ```
+     with the C++ equivalent:
+     ```   
+     #include <module-name.hpp>
+
+     using namespace <module-name>;  
+
+     void <func-name>(double xw) {
+       ...
+       return;
+     }
+
+     extern "C" {
+       void <func-name>_wrapper(double* xw) {
+         <func-name>(*xw);
+       }
+     }
+     ```
+
+  2. Replace any `use <module-name>` statement with the `#include <module-name.hpp>` 
+     header file and `using namespace <module-name>` statement. Place the `#include` 
+     statements at the top of the file. Assume that any variables not declared in the 
+     file are available in the header files. Follow C++ syntax and ignore the 
+     `use types` statement since it will not be applicable in C++.
+
+  3. Treat `real(dp)` as `double`, and `complex(dp)` as `std::complex<double>`. 
+     Include the `<complex>` header file to convert the corresponding types. 
+     To convert Fortran arrays to C++, use special container classes `FArray1D<T>`, 
+     `FArray2D<T>`, `FArray3D<T>` which match Fortran's memory layout, indexing, 
+     and access patterns. For example, the Fortran array:
+
+     `real(dp), dimension(nx,ny) :: a`
+
+     should be expressed as `FArray2D<double> a(nx,ny)` in C++. Include the header 
+     file `<FArray.hpp>`. Access array elements as `a(i,j)`.
+
+  4. In the extern "C" interface, expose functions to Fortran by adding the `_wrapper` 
+     keyword.
+
+  5. Convert `intent(in)` and `intent(inout)` attributes to corresponding C++ conventions.
+
+  6. Some Fortran subroutines will be replaced with functions that have a specific return type. 
+     Follow similar rules for them.
+
+I will provide a test problem once you confirm that you understand these requirements.
+"""
+
+[[instructions]]
+role = "assistant"
+content = "I am ready. Please give me a test problem."
+
+[[instructions]]
+role = "user"
+content = """
+This is a template for the FORTRAN subroutine file which will be your input. Convert it to C++ using the rules I gave you:
+
+```
+subroutine example(a,b,c,d)
+  use types
+  use constants_mod
+  use nf_mod
+  use zcouple_mod
+  use ewcharge_mod
+
+  implicit none
+
+  real(dp) :: a
+  real(dp), dimension(-nf:nf) :: b
+  real(dp), intent(in), dimension(mxpart,4) :: c
+  real(dp), intent(inout), dimension(mxpart,mxpart) :: d
+
+  integer :: i,j
+  real(dp), dimension(nf,4) :: temp
+
+  do i=-nf,nf
+    b(i) = 0.
+  end do
+
+  do i=2,10
+    do j=1,i-1
+      c(j,2) = d(i,j)
+    end do
+  end do
+       
+  do j=1,nf
+    l(j)=tau(j)-two*Q(j)
+    r(j)=-two*Q(j)*xw)
+  enddo
+
+  le=1.
+  re=2.
+
+  return
+end
+
+function example2(b,i,j)
+  implicit none
+  integer :: i,j
+  real(dp), dimension(4) :: b
+  real(dp) :: example2
+
+  example2 = b(i)*b(j)
+end
+
+```
+"""
+
+[[instructions]]
+role = "assistant"
+content = """
+Here is the corresponding C++ file:
+
+```
+#include<cmath>
+#include<constants_mod.hpp>
+#include<nf_mod.hpp>
+#include<zcouple_mod.hpp>
+#include<ewcharge_mod.hpp>
+#include<FArray.hpp>
+
+void example(double& a, FArray1D<double>& b, FArray2D<double>& c, FArray2D<double>& d) {
+  using namespace constants_mod;
+  using namespace nf_mod;
+  using namespace zcouple_mod;
+  using namespace ewcharge_mod;
+
+  FArray2D<double> temp(nf,4);
+
+  for(int i=nf, i<=-nf, i++) {
+    b(i) = 0;
+  }
+
+  for(int i=2, i<=10, i++) {
+    for(int j=1, j<=i-1, j++) {
+      c(j,2) = d(i,j);
+    }
+  }
+
+  for (int j=1, j<=nf, j++) {
+    l(j)=tau(j)-two*Q(j);
+    r(j)=-two*Q(j)*xw);
+  }
+
+  le=1;
+  re=2;
+
+  return;
+}
+
+double example2(FArray1D<double>& b, int& i, int& j) {
+  return b(i)*b(j);
+}
+
+extern "C" {
+
+  void example_wrapper(double& a, double* fb, double* fc, double* fd) {
+    FArray1D<double> b(fb, 2*nf_mod::nf+1, -nf); // (pointer, size_i, start_i)
+    FArray2D<double> c(fc, mxpart_mod::mxpart, 4);
+    FArray2D<double> d(fd, mxpart_mod::mxpart, mxpart_mod::mxpart);
+    couplz(a,b,c,d);
+  }
+
+  double example2_wrapper(double* fb, int& i, int& j) {
+    FArray1D<double> b(fb, 4);
+    return example2(b,i,j);
+  }
+
+}
+```
+
+Key points:
+
+  1. The `couplz` subroutine has been converted to a C++ function, including the relevant namespaces. 
+  2. I have removed the `types` module as instructed and included necessary modules and namespaces, like `constants_mod` and `nf_mod`.
+  3. The FORTRAN data types `real(dp)` have been converted to `double`, and arrays have been converted to `FArray2D<double>`.
+  4. The extern "C" interface exposes the function to Fortran.
+
+Does this match your expectations?
+"""
+
+[[instructions]]
+role = "user"
+content = "Yes, this is correct. Make sure that you treat function/subroutines arguments with FArray format. Now convert the following module in a similar way:"

@@ -5,7 +5,7 @@ make clean || true
 cmake -DCMAKE_Fortran_COMPILER=gfortran -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++  ..
 make install
 
-./test -b u d~ ve e+ # Directories: W
+./test -b u d~ ve e+ # Directories: W (converted)
 ./test -b u d~ ve e+ g # Directories: W1jet
 ./test -b u d~ ve e+ g g # Directories: W2jet, BDK, loop
 ./test -b u u~ e- e+ # Directories: Z (converted)

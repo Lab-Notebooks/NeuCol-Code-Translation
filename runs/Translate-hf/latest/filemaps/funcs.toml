@@ -2,18 +2,22 @@
 headers = []
 
 sources = [
-    "/Need/dot.f",
+    #"/W/qqb_w.f",
+    #"/W/qqb_w_g.f",
+    #"/W/qqb_w_v.f",
+    #"/W/ampqqbgll.f",
+    #"/Need/dot.f",
     #"/Z/qqb_z.f",
     #"/Z/qqb_z_v.f",
-    #"/Need/coupling.f",
-    #"/Need/ckmfill.f",
+    "/Need/coupling.f",
+    "/Need/ckmfill.f",
     #"/Need/couplz_cms.f",
-    #"/Need/cplx.f",
+    "/Need/cplx.f",
     #"/Need/dotem.f",
     #"/Need/dot.f",
     #"/Need/fixcms.f",
-    #"/Need/i3m.f",
-    #"/Need/lfunctions.f",
+    "/Need/i3m.f",
+    "/Need/lfunctions.f",
     #"/Need/lnrat.f",
     #"/Need/spinoru.f",
 ]
