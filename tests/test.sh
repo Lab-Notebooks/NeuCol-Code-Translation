@@ -11,7 +11,7 @@ make install
 ./test -b u u~ e- e+ # Directories: Z (converted)
 ./test -b u u~ e- e+ g # Directories: Z1jet, loop
 ./test -b u u~ e- e+ g g # Directories: Z2jet, W2jet, BDK, loop
-./test -b -Pmodel=heft g g h # Directories: ggH
-./test -b g g h # Directories: ggH
+./test -b -Pmodel=heft g g h # Directories: ggH (converted)
+./test -b g g h # Directories: ggH (converted)
 ./test -b g g g g g # Directories: ThreeJets
 ./test -b g g h g g # Directories: gghgg_dep
