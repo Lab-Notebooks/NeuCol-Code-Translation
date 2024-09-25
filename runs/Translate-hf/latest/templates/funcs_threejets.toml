@@ -1,0 +1,307 @@
+[[instructions]]
+role = "user"
+content = """
+You are a code conversion tool for a scientific computing application.
+The application is organized as different source files in a directory structure.
+I will give you a Fortran file which you will convert to a C++ source code file.
+
+The code you will receive is part of a larger codebase, so do not add additional
+function declarations or a main function definition. Just perform the conversion
+process line-by-line.
+
+Here are some updated rules I want you to follow:
+
+1. The input code is a Fortran subroutine or function which needs to be converted
+   to a C++ function. Replace the Fortran structure:
+
+   ```
+   use <module-name>
+   subroutine <func-name>(xw)
+    real(dp):: xw
+    ...
+   end subroutine
+   ```
+
+   with the C++ equivalent:
+
+   ```
+   #include <module-name.hpp>
+   using namespace <module-name>;  
+
+   void <func-name>(double& xw) {
+     ...
+     return;
+   }
+
+   extern "C" {
+     void <func-name>_wrapper(double* xw) {
+       <func-name>(*xw);
+     }
+   }
+   ```
+
+2. Replace any use `<module-name>` statements with `#include <module-name.hpp>`
+   and using `namespace <module-name>;`. Place the `#include` statements at the top
+   of the file. You can assume that variables not declared in the subroutine are available
+   through the header files in C++. Ignore `use types` and other irrelevant modules.
+
+3. Convert Fortran types as follows:
+
+   `real(dp)` to `double`
+   `complex(dp)` to `std::complex<double>` Include the `<complex>` header in case of complex types.
+
+   Convert Fortran arrays to C++ using the `FArray` template classes which support Fortran-like
+   indexing. For example, replace:
+
+   ```
+   real(dp), dimension(nx, ny) :: a
+   ```
+
+   with:
+
+   ```
+   FArray2D<double> a(nx, ny);
+   ```
+
+   Include the <FArray.hpp> header and use the appropriate class (FArray1D, FArray2D, FArray3D) depending on 
+   the array dimensionality.
+
+4. For subroutine arguments declared with intent(in) or intent(inout), pass them by reference in C++. For example:
+
+   ```
+   real(dp), intent(in) :: a
+   ```
+
+   ```
+   double& a
+   ```
+
+5. Replace Fortran statement functions with equivalent lambda functions in C++.
+
+6. For complex number calculations, ensure the operations are correctly mapped 
+   to C++ `std::complex<double>`.
+
+7. Ensure the Fortran `return` statement is handled correctly in C++ by placing a `return;` 
+   at the end of the function.
+
+8. In the `extern "C"` section, create wrapper functions that expose the C++ functions
+   to Fortran. The wrapper functions should handle the conversion between C++ and Fortran
+   data types, particularly for arrays, and be named using the _wrapper suffix.
+
+9. Ensure that the Fortran function or subroutine calls the corresponding C++ wrapper
+   function in the generated Fortran interface file (<filename>_fi.f90).
+
+   Example structure:
+
+   ```
+   subroutine <func-name>(args)
+     use, intrinsic :: iso_c_binding
+     interface
+        subroutine <func-name>_wrapper(args) bind(C, name="<func-name>_wrapper")
+        ! Argument declarations
+        end subroutine <func-name>_wrapper
+     end interface
+     call <func-name>_wrapper(args)
+   end subroutine <func-name>
+   ```
+
+10. Follow the general pattern and structure, and do not introduce unnecessary
+    main functions or global variable declarations unless required. 
+"""
+
+[[instructions]]
+role = "assistant"
+content = "I am ready. Please give me a test problem."
+
+[[instructions]]
+role = "user"
+content = """
+This is a template for a Fortran subroutine file which will be your input. Convert it
+to C++ using the rules I gave you:
+
+```
+      subroutine A51mmppp5g(j1,j2,j3,j4,j5,za,zb,miA5tree,A51half,A51one)
+      use types
+      use constants_mod
+      use mxpart_mod
+      use sprods_com_mod
+      use epinv_mod
+      use epinv2_mod
+      use scale_mod
+      implicit none
+      complex(dp):: za(mxpart,mxpart),zb(mxpart,mxpart)
+      real(dp), parameter:: deltar=1._dp ! t'Hooft-Veltman scheme (FDH -> deltar = 0)
+      complex(dp):: A51half,A51one
+      complex(dp):: Vg,Vf,Vs,Ff,Fs,L0,L2,miA5tree,lnrat
+      integer:: j1,j2,j3,j4,j5
+      complex(dp) :: epinvPij
+
+      ! statement function for 1/e*Pij
+      epinvPij(i,j)=epinv+lnrat(musq,-s(i,j))
+
+c----Eq.(8,10) of hep-ph/9302280v1 of BDK multiplied by 16*pi^2*(-i)
+c--- to give (16*pi^2)*(-i)*A^{[1/2]}_{5;1}
+      miA5tree=za(j1,j2)**4
+     & /(za(j1,j2)*za(j2,j3)*za(j3,j4)*za(j4,j5)*za(j5,j1))
+      Vg=-five*epinv*epinv2
+     & -epinv*(lnrat(musq,-s(j1,j2))+lnrat(musq,-s(j2,j3))+lnrat(musq,-s(j3,j4))
+     &        +lnrat(musq,-s(j4,j5))+lnrat(musq,-s(j5,j1)))
+     & -half*(lnrat(musq,-s(j1,j2))**2+lnrat(musq,-s(j2,j3))**2+lnrat(musq,-s(j3,j4))**2
+     &        +lnrat(musq,-s(j4,j5))**2+lnrat(musq,-s(j5,j1))**2)
+     & +lnrat(-s(j1,j2),-s(j2,j3))*lnrat(-s(j3,j4),-s(j4,j5))
+     & +lnrat(-s(j2,j3),-s(j3,j4))*lnrat(-s(j4,j5),-s(j5,j1))
+     & +lnrat(-s(j3,j4),-s(j4,j5))*lnrat(-s(j5,j1),-s(j1,j2))
+     & +lnrat(-s(j4,j5),-s(j5,j1))*lnrat(-s(j1,j2),-s(j2,j3))
+     & +lnrat(-s(j5,j1),-s(j1,j2))*lnrat(-s(j2,j3),-s(j3,j4))
+     & +five/six*pisq-deltar/three
+      Vf=cmplx(-five/two*epinv-two,kind=dp)
+     & -half*(lnrat(musq,-s(j2,j3))+lnrat(musq,-s(j5,j1)))
+      Vs=-Vf/three+cmplx(two/nine,kind=dp)
+      Ff=-za(j1,j2)**2*L0(-s(j2,j3),-s(j5,j1))
+     & *(za(j2,j3)*zb(j3,j4)*za(j4,j1)+za(j2,j4)*zb(j4,j5)*za(j5,j1))
+     & /(two*za(j2,j3)*za(j3,j4)*za(j4,j5)*za(j5,j1)*s(j5,j1))
+      Fs=-Ff/three
+     & -zb(j3,j4)*za(j4,j1)*za(j2,j4)*zb(j4,j5)*L2(-s(j2,j3),-s(j5,j1))
+     & *(za(j2,j3)*zb(j3,j4)*za(j4,j1)+za(j2,j4)*zb(j4,j5)*za(j5,j1))
+     & /(three*za(j3,j4)*za(j4,j5)*s(j5,j1)**3)
+     & -za(j3,j5)*zb(j3,j5)**3
+     & /(three*zb(j1,j2)*zb(j2,j3)*za(j3,j4)*za(j4,j5)*zb(j5,j1))
+     & +za(j1,j2)*zb(j3,j5)**2
+     & /(three*zb(j2,j3)*za(j3,j4)*za(j4,j5)*zb(j5,j1))
+     & +za(j1,j2)*zb(j3,j4)*za(j4,j1)*za(j2,j4)*zb(j4,j5)
+     & /(six*s(j2,j3)*za(j3,j4)*za(j4,j5)*s(j5,j1))
+      A51half=-(Vf+Vs)*miA5tree-(Ff+Fs)
+      A51one=(Vg+four*Vf+Vs)*miA5tree+(four*Ff+Fs)
+
+c      write(6,*) 'j1,j2,j3,j4,j5,miA5tree',j1,j2,j3,j4,j5,miA5tree
+      return
+      end
+```
+Here, lnrat is an external function defined in Need.hpp, and the comments start with either `!` or `c`.
+I expect the output to follow the format and rules I gave you. Additionally there be statement functions
+that you should convert to lambda functions.
+"""
+
+[[instructions]]
+role = "assistant"
+content = """
+Here is the corresponding C++ file:
+
+```
+#include <cmath>
+#include <complex>
+#include <constants_mod.hpp>
+#include <mxpart_mod.hpp>
+#include <sprods_com_mod.hpp>
+#include <epinv_mod.hpp>
+#include <epinv2_mod.hpp>
+#include <scale_mod.hpp>
+#include <FArray.hpp>
+#include <Need.hpp>
+
+void A51mmppp5g(int j1, int j2, int j3, int j4, int j5, FArray2D<std::complex<double>>& za, FArray2D<std::complex<double>>& zb, 
+                std::complex<double>& miA5tree, std::complex<double>& A51half, std::complex<double>& A51one) {
+    using namespace constants_mod;
+    using namespace mxpart_mod;
+    using namespace sprods_com_mod;
+    using namespace epinv_mod;
+    using namespace epinv2_mod;
+    using namespace scale_mod;
+
+    // Constants and parameters
+    const double deltar = 1.0;  // 't Hooft-Veltman scheme (FDH -> deltar = 0)
+    const double pisq = pi*pi;
+    
+    // Temporary variables
+    std::complex<double> Vg, Vf, Vs, Ff, Fs;    
+
+    // Statement function for 1/e*Pij
+    auto epinvPij = [&](int i, int j) {
+        return epinv + lnrat(musq, -s(i, j));
+    };
+
+    // Eq.(8,10) of hep-ph/9302280v1 of BDK multiplied by 16*pi^2*(-i)
+    miA5tree = std::pow(za(j1,j2), 4) / (za(j1,j2) * za(j2,j3) * za(j3,j4) * za(j4,j5) * za(j5,j1));
+
+    Vg = -5.0 * epinv * epinv2 
+         - epinv * (lnrat(musq, -s(j1,j2)) + lnrat(musq, -s(j2,j3)) + lnrat(musq, -s(j3,j4)) 
+                  + lnrat(musq, -s(j4,j5)) + lnrat(musq, -s(j5,j1)))
+         - 0.5 * (std::pow(lnrat(musq, -s(j1,j2)), 2) + std::pow(lnrat(musq, -s(j2,j3)), 2) + std::pow(lnrat(musq, -s(j3,j4)), 2) 
+                + std::pow(lnrat(musq, -s(j4,j5)), 2) + std::pow(lnrat(musq, -s(j5,j1)), 2))
+         + lnrat(-s(j1,j2), -s(j2,j3)) * lnrat(-s(j3,j4), -s(j4,j5))
+         + lnrat(-s(j2,j3), -s(j3,j4)) * lnrat(-s(j4,j5), -s(j5,j1))
+         + lnrat(-s(j3,j4), -s(j4,j5)) * lnrat(-s(j5,j1), -s(j1,j2))
+         + lnrat(-s(j4,j5), -s(j5,j1)) * lnrat(-s(j1,j2), -s(j2,j3))
+         + lnrat(-s(j5,j1), -s(j1,j2)) * lnrat(-s(j2,j3), -s(j3,j4))
+         + 5.0 / 6.0 * pisq - deltar / 3.0;
+
+    Vf = std::complex<double>(-5.0 / 2.0 * epinv - 2.0, 0)
+         - 0.5 * (lnrat(musq, -s(j2,j3)) + lnrat(musq, -s(j5,j1)));
+
+    Vs = -Vf / 3.0 + std::complex<double>(2.0 / 9.0, 0);
+
+    Ff = -std::pow(za(j1,j2), 2) * L0(-s(j2,j3), -s(j5,j1))
+         * (za(j2,j3) * zb(j3,j4) * za(j4,j1) + za(j2,j4) * zb(j4,j5) * za(j5,j1))
+         / (2.0 * za(j2,j3) * za(j3,j4) * za(j4,j5) * za(j5,j1) * s(j5,j1));
+
+    Fs = -Ff / 3.0
+         - zb(j3,j4) * za(j4,j1) * za(j2,j4) * zb(j4,j5) * L2(-s(j2,j3), -s(j5,j1))
+         * (za(j2,j3) * zb(j3,j4) * za(j4,j1) + za(j2,j4) * zb(j4,j5) * za(j5,j1))
+         / (3.0 * za(j3,j4) * za(j4,j5) * std::pow(s(j5,j1), 3))
+         - za(j3,j5) * std::pow(zb(j3,j5), 3)
+         / (3.0 * zb(j1,j2) * zb(j2,j3) * za(j3,j4) * za(j4,j5) * zb(j5,j1))
+         + za(j1,j2) * std::pow(zb(j3,j5), 2)
+         / (3.0 * zb(j2,j3) * za(j3,j4) * za(j4,j5) * zb(j5,j1))
+         + za(j1,j2) * zb(j3,j4) * za(j4,j1) * za(j2,j4) * zb(j4,j5)
+         / (6.0 * s(j2,j3) * za(j3,j4) * za(j4,j5) * s(j5,j1));
+
+    A51half = -(Vf + Vs) * miA5tree - (Ff + Fs);
+    A51one = (Vg + 4.0 * Vf + Vs) * miA5tree + (4.0 * Ff + Fs);
+
+    return;
+}
+
+extern "C" {
+    void A51mmppp5g_wrapper(int j1, int j2, int j3, int j4, int j5, std::complex<double>* za, std::complex<double>* zb, 
+                            std::complex<double>& miA5tree, std::complex<double>& A51half, std::complex<double>& A51one) {
+        using namespace mxpart_mod;
+        FArray2D<std::complex<double>> zaArr(za, mxpart, mxpart);
+        FArray2D<std::complex<double>> zbArr(zb, mxpart, mxpart);
+        A51mmppp5g(j1, j2, j3, j4, j5, zaArr, zbArr, miA5tree, A51half, A51one);
+    }
+}
+```
+
+And the corresponding Fortran-C interface file (example_fi.f90):
+
+```
+subroutine A51mmppp5g(j1,j2,j3,j4,j5,za,zb,miA5tree,A51half,A51one)
+
+   use iso_c_binding
+   use mxpart_mod
+   implicit none
+
+   complex(c_double_complex):: za(mxpart,mxpart),zb(mxpart,mxpart)
+   complex(c_double_complex):: A51half,A51one
+   integer(c_int):: j1,j2,j3,j4,j5
+   complex(c_double_complex):: miA5tree
+
+   interface
+     subroutine A51mmppp5g_wrapper(j1,j2,j3,j4,j5,za,zb,miA5tree,A51half,A51one) bind(C, name="A51mmppp5g_wrapper")
+       import :: c_int, c_double_complex, mxpart
+       complex(c_double_complex) :: za(mxpart,mxpart),zb(mxpart,mxpart)
+       complex(c_double_complex) :: A51half,A51one
+       integer(c_int), value :: j1,j2,j3,j4,j5
+       complex(c_double_complex) :: miA5tree
+     end subroutine
+   end interface
+ 
+   call A51mmppp5g_wrapper(j1,j2,j3,j4,j5,za,zb,miA5tree,A51half,A51one)
+
+end subroutine
+```
+"""
+
+[[instructions]]
+role = "user"
+content = "Yes, this is correct. Now I will give you another module:"
