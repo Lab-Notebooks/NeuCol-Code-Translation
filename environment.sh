@@ -14,6 +14,7 @@ source $SiteHome/environment.sh
 export CODELLAMA_HOME="$PROJECT_HOME/software/codellama/Llama"
 export MODEL_HOME="$PROJECT_HOME/models"
 export MCFM_HOME="$PROJECT_HOME/software/neucol/mcfminterface"
+export PEPPER_HOME="$PROJECT_HOME/software/pepper/pepper"
 
 # Output information to stdout
 echo "---------------------------------------------------------------------------------------"
@@ -25,5 +26,5 @@ echo "MPI_HOME=$MPI_HOME"
 echo "NVHPC_HOME=$NVHPC_HOME"
 echo "CODELLAMA_PATH=$CODELLAMA_HOME"
 echo "MODEL_HOME=$MODEL_HOME"
-echo "FLASHX_HOME=$FLASHX_HOME"
+echo "PEPPER_HOME=$PEPPER_HOME"
 echo "---------------------------------------------------------------------------------------"

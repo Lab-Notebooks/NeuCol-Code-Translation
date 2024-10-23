@@ -6,6 +6,7 @@ __pycache__
 config.sh
 software/codellama/Llama
 software/neucol/mcfminterface
+software/pepper/pepper
 models/codellama/CodeLlama-7b
 models/codellama/CodeLlama-7b-Instruct
 job.target

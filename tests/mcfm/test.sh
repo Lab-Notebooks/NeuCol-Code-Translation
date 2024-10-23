@@ -2,7 +2,7 @@ cd $MCFM_HOME/Bin
 
 # Compile and install
 make clean || true
-cmake -DCMAKE_Fortran_COMPILER=gfortran -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++  ..
+cmake -DCMAKE_Fortran_COMPILER=gfortran -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
 make install
 
 ./test -b u d~ ve e+ # Directories: W (converted)
